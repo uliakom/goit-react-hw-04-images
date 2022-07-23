@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Container } from './App.styled';
 import { Report } from 'notiflix/build/notiflix-report-aio';
 import { fetchImages } from 'services/api';
@@ -8,26 +8,22 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import { startLoader, stopLoader } from 'components/Loader';
 
-class App extends Component {
-  state = {
-    hits: [],
-    searchQuery: '',
-    page: 1,
-    status: 'idle',
-    largeUrl: null,
-    tag: null,
-  };
+const App = () => {
+  const [hits, setHits] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState('idle');
+  const [largeUrl, setLargeUrl] = useState(null);
+  const [tag, setTag] = useState(null);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, page } = this.state;
-    if (searchQuery !== prevState.searchQuery || page !== prevState.page) {
-      this.setState({ status: 'pending' });
-
+  useEffect(() => {
+    if (!searchQuery) return;
+    setStatus('pending');
+    const loadData = async () => {
       try {
         const response = await fetchImages(searchQuery, page);
-        this.setState(prevState => {
-          return { hits: [...prevState.hits, ...response], status: 'resolved' };
-        });
+        setHits(prev => [...response, ...prev]);
+        setStatus('resolved');
         stopLoader();
         if (response.length === 0) {
           Report.failure(
@@ -38,50 +34,51 @@ class App extends Component {
           return;
         }
       } catch (error) {
-        this.setState({ status: 'rejected' });
+        setStatus('rejected');
         console.log(error);
       } finally {
         stopLoader();
       }
-    }
-  }
+    };
+    loadData();
+  }, [searchQuery, page]);
 
-  handleSearch = searchName => {
-    this.setState({ searchQuery: searchName, page: 1, hits: [] });
+  const handleSearch = searchName => {
+    setSearchQuery(searchName);
+    setPage(1);
+    setHits([]);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
   };
 
-  onModalClose = () => {
-    this.setState({ largeUrl: null, tag: null });
+  const onModalClose = () => {
+    setLargeUrl(null);
+    setTag(null);
   };
 
-  openModal = (url, alt) => this.setState({ largeUrl: url, tag: alt });
+  const openModal = (url, alt) => {
+    setLargeUrl(url);
+    setTag(alt);
+  };
 
-  render() {
-    const { hits, status, largeUrl, tag } = this.state;
-    const { handleLoadMore, handleSearch, onModalClose, openModal } = this;
-    return (
-      <Container>
-        <SearchBar onSubmit={handleSearch} />
-        {status === 'pending' && startLoader()}
-        {status === 'resolved' && hits.length > 0 && (
-          <>
-            <ImageGallery images={hits} onOpenModal={openModal} />
-            <Button onClick={handleLoadMore} />
-          </>
-        )}
-        {status === 'rejected' && (
-          <h2>Ups... Something went wrong. Please try again later.</h2>
-        )}
-        {largeUrl && <Modal url={largeUrl} alt={tag} onClose={onModalClose} />}
-      </Container>
-    );
-  }
-}
+  return (
+    <Container>
+      <SearchBar onSubmit={handleSearch} />
+      {status === 'pending' && startLoader()}
+      {status === 'resolved' && hits.length > 0 && (
+        <>
+          <ImageGallery images={hits} onOpenModal={openModal} />
+          <Button onClick={handleLoadMore} />
+        </>
+      )}
+      {status === 'rejected' && (
+        <h2>Ups... Something went wrong. Please try again later.</h2>
+      )}
+      {largeUrl && <Modal url={largeUrl} alt={tag} onClose={onModalClose} />}
+    </Container>
+  );
+};
 
 export default App;

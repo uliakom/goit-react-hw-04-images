@@ -1,35 +1,35 @@
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { useEffect } from 'react';
 import { Backdrop, ModalWindow, Image } from './Modal.styled';
 
 const modalRoot = document.querySelector('#modal-root');
 
-export default class Modal extends Component {
-  handleEscClose = e => {
+const Modal = ({ url, alt, onClose }) => {
+  const handleEscClose = e => {
     if (e.code === 'Escape') {
-      this.props.onClose();
+      onClose();
     }
   };
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleEscClose);
-  }
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleEscClose);
-  }
 
-  render() {
-    const { url, onClose, alt } = this.props;
-    return createPortal(
-      <Backdrop onClick={onClose}>
-        <ModalWindow>
-          <Image src={url} alt={alt} />
-        </ModalWindow>
-      </Backdrop>,
-      modalRoot
-    );
-  }
-}
+  useEffect(() => {
+    window.addEventListener('keydown', handleEscClose);
+    return () => {
+      window.removeEventListener('keydown', handleEscClose);
+    };
+  }, []);
+
+  return createPortal(
+    <Backdrop onClick={onClose}>
+      <ModalWindow>
+        <Image src={url} alt={alt} />
+      </ModalWindow>
+    </Backdrop>,
+    modalRoot
+  );
+};
+
+export default Modal;
 
 Modal.propTypes = {
   alt: PropTypes.string,
