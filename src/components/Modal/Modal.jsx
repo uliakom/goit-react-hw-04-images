@@ -17,7 +17,7 @@ const Modal = ({ url, alt, onClose }) => {
     return () => {
       window.removeEventListener('keydown', handleEscClose);
     };
-  }, []);
+  });
 
   return createPortal(
     <Backdrop onClick={onClose}>
