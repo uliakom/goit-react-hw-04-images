@@ -6,18 +6,17 @@ import { Backdrop, ModalWindow, Image } from './Modal.styled';
 const modalRoot = document.querySelector('#modal-root');
 
 const Modal = ({ url, alt, onClose }) => {
-  const handleEscClose = e => {
-    if (e.code === 'Escape') {
-      onClose();
-    }
-  };
-
   useEffect(() => {
+    const handleEscClose = e => {
+      if (e.code === 'Escape') {
+        onClose();
+      }
+    };
     window.addEventListener('keydown', handleEscClose);
     return () => {
       window.removeEventListener('keydown', handleEscClose);
     };
-  });
+  }, [onClose]);
 
   return createPortal(
     <Backdrop onClick={onClose}>

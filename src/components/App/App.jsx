@@ -19,12 +19,11 @@ const App = () => {
   useEffect(() => {
     if (!searchQuery) return;
     setStatus('pending');
-    const loadData = async () => {
-      try {
-        const response = await fetchImages(searchQuery, page);
+
+    fetchImages(searchQuery, page)
+      .then(response => {
         setHits(prev => [...response, ...prev]);
         setStatus('resolved');
-        stopLoader();
         if (response.length === 0) {
           Report.failure(
             'Search Failure',
@@ -33,14 +32,14 @@ const App = () => {
           );
           return;
         }
-      } catch (error) {
+      })
+      .catch(error => {
         setStatus('rejected');
         console.log(error);
-      } finally {
+      })
+      .finally(() => {
         stopLoader();
-      }
-    };
-    loadData();
+      });
   }, [searchQuery, page]);
 
   const handleSearch = searchName => {
